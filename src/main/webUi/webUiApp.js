@@ -5,7 +5,13 @@ webUiApp.controller('WebUiAppController', function WebUiAppController($scope) {
     $scope.serverMessage;
     $scope.startGame = function (action) {
         try {
-            server = new WebSocket('ws://localhost:8080/connect-four/' + $scope.gameId + '/' + $scope.playerName + '/' + action);
+            var url;
+            if (action == 'create'){
+                url = 'ws://localhost:8080/connect-four/' + $scope.playerName + '/create';
+            } else if (action == 'join'){
+                url = 'ws://localhost:8080/connect-four/' + $scope.playerName + '/join?gameId=' + $scope.gameId;
+            }
+            server = new WebSocket(url);
         } catch (error) {
             alert("Sever connection error: " + error);
             return;

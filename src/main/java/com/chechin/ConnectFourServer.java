@@ -15,28 +15,22 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-@ServerEndpoint("/connect-four/{gameId}/{userId}/{action}")
+@ServerEndpoint("/connect-four/{userId}/{action}")
 public class ConnectFourServer {
 
     private static Map<Long, GameWrapper> games = new HashMap<>();
     private static ObjectMapper mapper = new ObjectMapper();
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("gameId") long gameId,
-                       @PathParam("userId") String username, @PathParam("action") String action) {
-        System.out.println("Session is established for user: " + username);
+    public void onOpen(Session session,
+                       @PathParam("userId") String playerName, @PathParam("action") String action) {
+        System.out.println("Session is established for user: " + playerName);
         try {
-            ConnectFourGame connectFourGame = ConnectFourGame.getActiveGame(gameId);
-            if (connectFourGame != null) {
-                session.close(new CloseReason(
-                        CloseReason.CloseCodes.UNEXPECTED_CONDITION,
-                        "This game has already started."
-                ));
-            }
             if ("create".equalsIgnoreCase(action)) {
-                gameId = ConnectFourGame.queueGame(username);
+                long gameId = ConnectFourGame.queueGame(playerName);
                 GameWrapper gameWrapper = new GameWrapper();
                 gameWrapper.setGameId(gameId);
                 gameWrapper.setPlayer1(session);
@@ -44,12 +38,28 @@ public class ConnectFourServer {
                 System.out.println("game scheduled; game id =" + gameId + ", waiting for the second player");
                 MessageSender.sendJsonMessage(session, gameWrapper, "game scheduled; game id =" + gameId + ", waiting for the second player");
             } else if ("join".equalsIgnoreCase(action)) {
-                GameWrapper gameWrapper = ConnectFourServer.games.get(gameId);
-                gameWrapper.setPlayer2(session);
-                gameWrapper.setGame(ConnectFourGame.startGame(gameId, username));
-                System.out.println("second player has joined. gameStarted");
-                MessageSender.sendJsonMessage(gameWrapper.getPlayer1(), gameWrapper, "second player has joined. gameStarted");
-                MessageSender.sendJsonMessage(gameWrapper.getPlayer2(), gameWrapper, "gameStarted");
+                long gameId;
+                List<String> gameIds = session.getRequestParameterMap().get("gameId");
+                if (gameIds != null) {
+                    System.out.println("game id is: " + gameIds.get(0));
+                    gameId = Long.parseLong(gameIds.get(0));
+                    ConnectFourGame connectFourGame = ConnectFourGame.getActiveGame(gameId);
+                    if (connectFourGame != null) {
+                        session.close(new CloseReason(
+                                CloseReason.CloseCodes.UNEXPECTED_CONDITION,
+                                "This game has already started."
+                        ));
+                    }
+                    GameWrapper gameWrapper = ConnectFourServer.games.get(gameId);
+                    gameWrapper.setPlayer2(session);
+                    gameWrapper.setGame(ConnectFourGame.startGame(gameId, playerName));
+                    System.out.println("second player has joined. gameStarted");
+                    MessageSender.sendJsonMessage(gameWrapper.getPlayer1(), gameWrapper, playerName + " has joined the game. gameStarted");
+                    MessageSender.sendJsonMessage(gameWrapper.getPlayer2(), gameWrapper, "gameStarted");
+                } else {
+                    //TODO throw error
+                }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
