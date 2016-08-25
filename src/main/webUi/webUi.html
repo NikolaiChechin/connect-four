@@ -1,0 +1,43 @@
+<html ng-app="webUiApp">
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+    <script src="webUiApp.js"></script>
+</head>
+<body ng-controller="WebUiAppController">
+<div class="panel">
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Player name" ng-model="playerName">
+    </div>
+    <br>
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Game id" ng-model="gameId">
+    </div>
+    <br>
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Column" ng-model="column">
+    </div>
+    <br>
+    <button class="btn btn-default"
+            ng-click="startGame('create')">Create game
+    </button>
+    <button class="btn btn-default"
+            ng-click="startGame('join')">Join game
+    </button>
+    <br>
+    <button class="btn btn-default"
+            ng-click="sendMessage()">Send message
+    </button>
+    <br>
+    <div class="input-group">
+        <label>Server message:</label>
+        {{serverMessage}}
+    </div>
+</div>
+</body>
+</html>

@@ -1,8 +1,8 @@
 package com.chechin;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 /**
  * Created by chechin on 23.08.2016.
@@ -15,6 +15,13 @@ public class ConnectFourGame {
     private final Long id;
     private final String player1;
     private final String player2;
+    private Player nextMove = Player.PLAYER_1;
+    /**
+     * Standard connect-four grid is 7x6
+     */
+    private static final int COLUMNS_NUMBER = 6;
+    private static final int ROWS_NUMBER = 5;
+    private Player[][] grid = new Player[COLUMNS_NUMBER][ROWS_NUMBER];
 
     private ConnectFourGame(Long id, String player1, String player2) {
         this.id = id;
@@ -57,5 +64,22 @@ public class ConnectFourGame {
 
     public static ConnectFourGame getActiveGame(Long gameId) {
         return ConnectFourGame.activeGames.get(gameId);
+    }
+
+    public synchronized void move(Player player, int columnNumber) {
+
+        if (player != this.nextMove) {
+            throw new IllegalArgumentException("It is not your turn!");
+        }
+        if (columnNumber < 0 && columnNumber > COLUMNS_NUMBER)
+            throw new IllegalArgumentException("Column must be between 0 and 6");
+
+        if (this.grid[columnNumber][ROWS_NUMBER] != null)
+            throw new IllegalArgumentException("Column " + columnNumber + " already filled. Move can't be done.");
+
+        Player column[] = grid[columnNumber];
+        OptionalInt emptyRowNum = IntStream.range(0, column.length).filter(i -> column[i] == null).findFirst();
+        column[emptyRowNum.getAsInt()] = player;
+
     }
 }

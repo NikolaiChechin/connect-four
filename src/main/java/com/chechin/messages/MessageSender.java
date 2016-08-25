@@ -17,7 +17,7 @@ public class MessageSender {
     public static void sendJsonMessage(Session session, GameWrapper gameWrapper, String message) {
         try {
             session.getBasicRemote()
-                    .sendText(mapper.writeValueAsString(message));
+                    .sendText(message);
         } catch (IOException e) {
             handleException(e, gameWrapper);
         }
