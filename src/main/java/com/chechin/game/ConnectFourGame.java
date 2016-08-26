@@ -2,6 +2,7 @@ package com.chechin.game;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -19,13 +20,14 @@ public class ConnectFourGame {
     private int lastColumn;
     private int lastRow;
     private boolean over;
+    private boolean draw;
     private Player winner;
     /**
      * Standard connect-four grid is 7x6
      */
     private static final int COLUMNS_NUMBER = 7;
     private static final int ROWS_NUMBER = 6;
-    private char[][] grid = new char[COLUMNS_NUMBER][ROWS_NUMBER];
+    private String[][] grid = new String[COLUMNS_NUMBER][ROWS_NUMBER];
 
     private ConnectFourGame(Long id, String player1, String player2) {
         this.id = id;
@@ -45,8 +47,12 @@ public class ConnectFourGame {
         return player2;
     }
 
-    public boolean isOver(){
+    public boolean isOver() {
         return over;
+    }
+
+    public boolean isDraw() {
+        return draw;
     }
 
     public Player getWinner() {
@@ -86,33 +92,37 @@ public class ConnectFourGame {
         if (!(0 <= columnNumber && columnNumber < COLUMNS_NUMBER))
             throw new IllegalArgumentException("Column must be between 0 and 6");
 
-        if (this.grid[columnNumber][ROWS_NUMBER - 1] != '\u0000')
+        String column[] = grid[columnNumber];
+        OptionalInt emptyRowNum = IntStream.range(0, column.length).filter(i -> column[i] == null).findFirst();
+        if (emptyRowNum.isPresent()) {
+            column[emptyRowNum.getAsInt()] = player.getIndex();
+            this.lastColumn = columnNumber;
+            this.lastRow = emptyRowNum.getAsInt();
+            this.nextMove = this.nextMove == Player.PLAYER_1 ? Player.PLAYER_2 : Player.PLAYER_1;
+
+            if (isWinMove(player)) {
+                this.over = true;
+                this.winner = player;
+            }
+
+            if (isDrawMove()) {
+                this.draw = true;
+            }
+
+            if (isOver()) {
+                ConnectFourGame.activeGames.remove(this.id);
+            }
+        } else {
             throw new IllegalArgumentException("Column " + columnNumber + " already filled. Move can't be done.");
-
-        char column[] = grid[columnNumber];
-        OptionalInt emptyRowNum = IntStream.range(0, column.length).filter(i -> column[i] == '\u0000').findFirst();
-        column[emptyRowNum.getAsInt()] = player.getIndex();
-        this.lastColumn = columnNumber;
-        this.lastRow = emptyRowNum.getAsInt();
-        this.nextMove = this.nextMove == Player.PLAYER_1 ? Player.PLAYER_2 : Player.PLAYER_1;
-
-        if(isWinMove(player)){
-            this.over = true;
-            this.winner = player;
         }
-
-        if(isOver()){
-            ConnectFourGame.activeGames.remove(this.id);
-        }
-
     }
 
     private boolean isWinMove(Player player) {
-        return (getHorisontalLine().contains(player.getWinCombo())) || (getVerticalLine().contains(player.getWinCombo())) ||
+        return (getHorizontalLine().contains(player.getWinCombo())) || (getVerticalLine().contains(player.getWinCombo())) ||
                 (getSlashDiagonalLine().contains(player.getWinCombo())) || (backslashDiagonalLine().contains(player.getWinCombo()));
     }
 
-    private String getHorisontalLine() {
+    private String getHorizontalLine() {
         StringBuilder sb = new StringBuilder(COLUMNS_NUMBER);
         for (int colNum = 0; colNum < COLUMNS_NUMBER; colNum++) {
             sb.append(this.grid[colNum][this.lastRow]);
@@ -121,7 +131,7 @@ public class ConnectFourGame {
     }
 
     private String getVerticalLine() {
-        return new String(this.grid[this.lastColumn]);
+        return Arrays.stream(this.grid[this.lastColumn]).collect(Collectors.joining(""));
     }
 
     private String getSlashDiagonalLine() {
@@ -144,5 +154,11 @@ public class ConnectFourGame {
             }
         }
         return sb.toString();
+    }
+
+    private boolean isDrawMove() {
+        Optional<String> nullElem = Arrays.stream(grid).flatMap(Arrays::stream).filter(elem -> elem == null).findAny();
+        nullElem.isPresent();
+        return !nullElem.isPresent();
     }
 }
