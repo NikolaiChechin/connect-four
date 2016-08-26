@@ -1,4 +1,4 @@
-package com.chechin;
+package com.chechin.game;
 
 /**
  * Created by chechin on 25.08.2016.

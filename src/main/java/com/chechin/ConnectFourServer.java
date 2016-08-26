@@ -4,6 +4,9 @@ package com.chechin;
  * Created by chechin on 23.08.2016.
  */
 
+import com.chechin.game.ConnectFourGame;
+import com.chechin.game.Move;
+import com.chechin.game.Player;
 import com.chechin.messages.MessageSender;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -76,12 +79,44 @@ public class ConnectFourServer {
     public void onMessage(Session session, String message,
                           @PathParam("gameId") long gameId) {
         System.out.println(message);
-        Move move = mapper.readValue(message, Move.class);
         GameWrapper gameWrapper = ConnectFourServer.games.get(gameId);
-        boolean isPlayer1 = session == gameWrapper.getPlayer1();
-        gameWrapper.getGame().move(isPlayer1 ? Player.PLAYER_1 :
-                Player.PLAYER_2, move.getColumn());
-        MessageSender.sendJsonMessage(isPlayer1 ? gameWrapper.getPlayer2() :
-                gameWrapper.getPlayer1(), gameWrapper, "Opponent has made a move");
+        Move move = null;
+        try {
+            move = mapper.readValue(message, Move.class);
+
+            boolean isPlayer1 = session == gameWrapper.getPlayer1();
+            ConnectFourGame game = gameWrapper.getGame();
+            game.move(isPlayer1 ? Player.PLAYER_1 :
+                    Player.PLAYER_2, move.getColumn());
+            MessageSender.sendJsonMessage(isPlayer1 ? gameWrapper.getPlayer2() :
+                    gameWrapper.getPlayer1(), gameWrapper, "Opponent has made a move");
+
+            if (game.isOver()) {
+                MessageSender.sendJsonMessage(gameWrapper.getPlayer1(), gameWrapper, "Game is over!");
+                MessageSender.sendJsonMessage(gameWrapper.getPlayer2(), gameWrapper, "Game is over!");
+                gameWrapper.getPlayer1().close();
+                gameWrapper.getPlayer2().close();
+            }
+
+        } catch (IOException e) {
+            handleException(e, gameWrapper);
+        }
+    }
+
+    private static void handleException(Throwable t, GameWrapper gameWrapper) {
+        t.printStackTrace();
+        String message = t.toString();
+        try {
+            gameWrapper.getPlayer1().close(new CloseReason(
+                    CloseReason.CloseCodes.UNEXPECTED_CONDITION, message
+            ));
+        } catch (IOException ignore) {
+        }
+        try {
+            gameWrapper.getPlayer2().close(new CloseReason(
+                    CloseReason.CloseCodes.UNEXPECTED_CONDITION, message
+            ));
+        } catch (IOException ignore) {
+        }
     }
 }

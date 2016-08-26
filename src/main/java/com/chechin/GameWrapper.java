@@ -1,5 +1,7 @@
 package com.chechin;
 
+import com.chechin.game.ConnectFourGame;
+
 import javax.websocket.Session;
 
 /**
