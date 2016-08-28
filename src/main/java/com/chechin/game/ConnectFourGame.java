@@ -47,6 +47,10 @@ public class ConnectFourGame {
         return player2;
     }
 
+    public String[][] getGrid() {
+        return grid;
+    }
+
     public boolean isOver() {
         return over;
     }
@@ -69,7 +73,7 @@ public class ConnectFourGame {
         return id;
     }
 
-    public static void removeQueuedGame(Integer id) {
+    public static void removeQueuedGame(Long id) {
         ConnectFourGame.pendingGames.remove(id);
     }
 
@@ -82,6 +86,12 @@ public class ConnectFourGame {
 
     public static ConnectFourGame getActiveGame(Long gameId) {
         return ConnectFourGame.activeGames.get(gameId);
+    }
+
+    public synchronized void forfeit(Player player) {
+        ConnectFourGame.activeGames.remove(this.id);
+        this.winner = player == Player.PLAYER_1 ? Player.PLAYER_2 : Player.PLAYER_1;
+        this.over = true;
     }
 
     public synchronized void move(Player player, int columnNumber) {
@@ -100,12 +110,13 @@ public class ConnectFourGame {
             this.lastRow = emptyRowNum.getAsInt();
             this.nextMove = this.nextMove == Player.PLAYER_1 ? Player.PLAYER_2 : Player.PLAYER_1;
 
-            if (isWinMove(player)) {
+            boolean winMove = isWinMove(player);
+            boolean lastMove = isLastMove();
+            if (winMove) {
                 this.over = true;
                 this.winner = player;
-            }
-
-            if (isDrawMove()) {
+            } else if (lastMove) {
+                this.over = true;
                 this.draw = true;
             }
 
@@ -156,9 +167,14 @@ public class ConnectFourGame {
         return sb.toString();
     }
 
-    private boolean isDrawMove() {
-        Optional<String> nullElem = Arrays.stream(grid).flatMap(Arrays::stream).filter(elem -> elem == null).findAny();
-        nullElem.isPresent();
-        return !nullElem.isPresent();
+    private boolean isLastMove() {
+        for (int i = 0; i < COLUMNS_NUMBER; i++) {
+            for (int j = 0; j < ROWS_NUMBER; j++) {
+                if (grid[i][j] == null) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

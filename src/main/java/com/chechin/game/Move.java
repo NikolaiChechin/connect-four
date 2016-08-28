@@ -5,7 +5,17 @@ package com.chechin.game;
  */
 public class Move {
 
+    private Long gameId;
+
     private int column;
+
+    public Long getGameId() {
+        return gameId;
+    }
+
+    public void setGameId(Long gameId) {
+        this.gameId = gameId;
+    }
 
     public int getColumn() {
         return column;

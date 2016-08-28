@@ -6,9 +6,9 @@ webUiApp.controller('WebUiAppController', function WebUiAppController($scope) {
     $scope.startGame = function (action) {
         try {
             var url;
-            if (action == 'create'){
+            if (action == 'create') {
                 url = 'ws://localhost:8080/connect-four/' + $scope.playerName + '/create';
-            } else if (action == 'join'){
+            } else if (action == 'join') {
                 url = 'ws://localhost:8080/connect-four/' + $scope.playerName + '/join?gameId=' + $scope.gameId;
             }
             server = new WebSocket(url);
@@ -20,8 +20,16 @@ webUiApp.controller('WebUiAppController', function WebUiAppController($scope) {
             $scope.serverMessage = event.data;
             $scope.$apply();
         }
+        server.onerror = function (event) {
+            $scope.serverMessage = event.data;
+            $scope.$apply();
+        };
+        server.onclose = function(event) {
+            $scope.serverMessage = event.reason;
+            $scope.$apply();
+        };
     }
     $scope.sendMessage = function () {
-        server.send(JSON.stringify({column: $scope.column}));
+        server.send(JSON.stringify({gameId: $scope.gameId, column: $scope.column}));
     }
 });

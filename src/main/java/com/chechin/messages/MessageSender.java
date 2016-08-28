@@ -3,9 +3,10 @@ package com.chechin.messages;
 import com.chechin.GameWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.websocket.CloseReason;
 import javax.websocket.Session;
 import java.io.IOException;
+
+import static com.chechin.ExceptionHandler.handleException;
 
 /**
  * Created by chechin on 23.08.2016.
@@ -23,20 +24,20 @@ public class MessageSender {
         }
     }
 
-    private static void handleException(Throwable t, GameWrapper gameWrapper) {
-        t.printStackTrace();
-        String message = t.toString();
+    public static void sendJsonMessage(Session session, GameWrapper gameWrapper, Object message) {
         try {
-            gameWrapper.getPlayer1().close(new CloseReason(
-                    CloseReason.CloseCodes.UNEXPECTED_CONDITION, message
-            ));
-        } catch (IOException ignore) {
+            session.getBasicRemote()
+                    .sendText(mapper.writeValueAsString(message));
+        } catch (IOException e) {
+            handleException(e, gameWrapper);
         }
+    }
+    public static void sendJsonMessage(Session session, Object message) {
         try {
-            gameWrapper.getPlayer2().close(new CloseReason(
-                    CloseReason.CloseCodes.UNEXPECTED_CONDITION, message
-            ));
-        } catch (IOException ignore) {
+            session.getBasicRemote()
+                    .sendText(mapper.writeValueAsString(message));
+        } catch (IOException e) {
+            handleException(e, session);
         }
     }
 }
