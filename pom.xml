@@ -11,6 +11,7 @@
     <properties>
         <jetty.version>9.3.11.v20160721</jetty.version>
         <jackson.version>2.4.2</jackson.version>
+        <junit.version>4.11</junit.version>
     </properties>
 
     <build>
@@ -79,6 +80,13 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson.version}</version>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

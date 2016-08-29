@@ -5,6 +5,7 @@ package com.chechin;
  */
 
 import com.chechin.game.ConnectFourGame;
+import com.chechin.game.GameHelper;
 import com.chechin.game.Move;
 import com.chechin.game.Player;
 import com.chechin.messages.MessageSender;
@@ -34,7 +35,7 @@ public class ConnectFourServer {
         System.out.println("Session is established for user: " + playerName);
         try {
             if ("create".equalsIgnoreCase(action)) {
-                long gameId = ConnectFourGame.queueGame(playerName);
+                long gameId = GameHelper.queueGame(playerName);
                 GameWrapper gameWrapper = new GameWrapper();
                 gameWrapper.setGameId(gameId);
                 gameWrapper.setPlayer1(session);
@@ -48,7 +49,7 @@ public class ConnectFourServer {
                     System.out.println("game id is: " + gameIds.get(0));
                     try {
                         gameId = Long.parseLong(gameIds.get(0));
-                        ConnectFourGame connectFourGame = ConnectFourGame.getActiveGame(gameId);
+                        ConnectFourGame connectFourGame = GameHelper.getActiveGame(gameId);
                         if (connectFourGame != null) {
                             session.close(new CloseReason(
                                     CloseReason.CloseCodes.UNEXPECTED_CONDITION,
@@ -63,7 +64,7 @@ public class ConnectFourServer {
                             ));
                         } else {
                             gameWrapper.setPlayer2(session);
-                            gameWrapper.setGame(ConnectFourGame.startGame(gameId, playerName));
+                            gameWrapper.setGame(GameHelper.startGame(gameId, playerName));
                             System.out.println("second player has joined. gameStarted");
                             sendJsonMessage(gameWrapper.getPlayer1(), gameWrapper, playerName + " has joined the game. gameStarted");
                             sendJsonMessage(gameWrapper.getPlayer2(), gameWrapper, "gameStarted");
@@ -121,8 +122,7 @@ public class ConnectFourServer {
                             sendJsonMessage(gameWrapper.getPlayer2(), gameWrapper, "You win! Game is over!");
                         }
                     }
-//                    gameWrapper.getPlayer1().close();
-//                    gameWrapper.getPlayer2().close();
+                    GameHelper.removeActiveGame(move.getGameId());
                 }
             } else {
                 sendJsonMessage(session, gameWrapper, "Game with id: " + move.getGameId()
@@ -132,7 +132,6 @@ public class ConnectFourServer {
             handleException(e, session);
         }
     }
-
 
     @OnError
     public void onError(Session session, Throwable t) {
@@ -147,9 +146,9 @@ public class ConnectFourServer {
             return;
         boolean isPlayer1 = session == gameWrapper.getPlayer1();
         if (gameWrapper.getGame() == null) {
-            ConnectFourGame.removeQueuedGame(gameWrapper.getGameId());
+            GameHelper.removeQueuedGame(gameWrapper.getGameId());
         } else if (!gameWrapper.getGame().isOver()) {
-            gameWrapper.getGame().forfeit(isPlayer1 ? Player.PLAYER_1 :
+            GameHelper.forfeit(gameId, isPlayer1 ? Player.PLAYER_1 :
                     Player.PLAYER_2);
             Session opponent = (isPlayer1 ? gameWrapper.getPlayer2() : gameWrapper.getPlayer1());
             sendJsonMessage(opponent, gameWrapper, "Game forfeited");
